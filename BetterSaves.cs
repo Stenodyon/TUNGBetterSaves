@@ -26,6 +26,29 @@ namespace BetterSaves
         private static bool init = false;
         private static int instancesPerFrame = 50;
 
+        private static bool loading = false;
+        private static int progress = 0;
+        private static int maxProgress = 1;
+        private static readonly Color bgColor = new Color(0f, 0f, 0f, 0.5f);
+        private static readonly Color barColor = new Color(0f, 1f, 1f);
+
+        public override void OnGUI()
+        {
+            if (loading)
+                DrawProgressBar();
+        }
+
+        public static void DrawProgressBar()
+        {
+            int barWidth = Screen.width / 2;
+            int barHeight = Screen.height / 10;
+            int barX = Screen.width / 2 - barWidth / 2;
+            int barY = Screen.height / 2 - barHeight / 2;
+            int progressWidth = barWidth * progress / maxProgress;
+            ModUtilities.Graphics.DrawRect(new Rect(barX, barY, barWidth, barHeight), bgColor);
+            ModUtilities.Graphics.DrawRect(new Rect(barX, barY, progressWidth, barHeight), barColor);
+        }
+
         public override void LodingWorld(string worldName)
         {
             if(!init)
@@ -73,6 +96,7 @@ namespace BetterSaves
 
         private static IEnumerator LoadCoroutine()
         {
+            loading = true;
             Stopwatch watch = new Stopwatch();
             watch.Start();
             IGConsole.Log("Loading better save");
@@ -102,11 +126,13 @@ namespace BetterSaves
             MegaBoardMeshManager.MegaBoardMeshesOfColor.Clear();
             SetPlayerPosition(player);
             int size = data.Length;
+            maxProgress = size;
             for (int index = 0; index < size; index++)
             {
                 Loader.Instantiate(data[index]);
                 if ((index + 1) % instancesPerFrame == 0)
                 {
+                    progress = index;
                     yield return new WaitForEndOfFrame();
                 }
             }
@@ -114,6 +140,7 @@ namespace BetterSaves
             MegaMesh.GenerateNewMegaMesh();
             MegaBoardMeshManager.GenerateAllMegaBoardMeshes();
             watch.Stop();
+            loading = false;
             IGConsole.Log($"Loaded save in {watch.Elapsed.ToString()}");
         }
 
