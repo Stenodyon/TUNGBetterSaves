@@ -263,3 +263,5 @@ __pycache__/
 # BetterSaves specific stuff
 Assembly-CSharp*
 TextMeshPro-1.0.55.2017.1.0b12.dll
+UnityEngine.IMGUI*
+UnityEngine.TextRendering*

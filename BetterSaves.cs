@@ -145,6 +145,8 @@ namespace BetterSaves
             MegaBoardMeshManager.GenerateAllMegaBoardMeshes();
             watch.Stop();
             loading = false;
+            if (UIManager.SomeOtherMenuIsOpen)
+                SaveManager.SaveAll();
             IGConsole.Log($"Loaded save in {watch.Elapsed.ToString()}");
         }
 
@@ -262,6 +264,24 @@ namespace BetterSaves
                     //do stuff
                 }
                 return true;
+            }
+        }
+
+        [HarmonyPatch(typeof(RunPauseMenu), "QuitToDesktop")]
+        class NoExitPatch
+        {
+            static bool Prefix()
+            {
+                return !loading; // If loading, do not exit
+            }
+        }
+
+        [HarmonyPatch(typeof(RunPauseMenu), "QuitToMainMenu")]
+        class NoExitPatch2
+        {
+            static bool Prefix()
+            {
+                return !loading; // Really do not exit
             }
         }
     }
