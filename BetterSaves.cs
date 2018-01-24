@@ -23,7 +23,6 @@ namespace BetterSaves
         public override Version FrameworkVersion => PiTung.FrameworkVersion;
 
         private static bool legacySave = false;
-        private static bool init = false;
         private static int instancesPerFrame = 50;
 
         private static bool loading = false;
@@ -31,6 +30,21 @@ namespace BetterSaves
         private static int maxProgress = 1;
         private static readonly Color bgColor = new Color(0f, 0f, 0f, 0.5f);
         private static readonly Color barColor = new Color(0f, 1f, 1f);
+
+        [HarmonyPatch(typeof(DummyComponent), "Awake")]
+        static class InitPatch
+        {
+            private static bool init = false;
+
+            static void Postfix()
+            {
+                if(!init)
+                {
+                    IGConsole.RegisterCommand<Command_normalsave>();
+                    init = true;
+                }
+            }
+        }
 
         public override void OnGUI()
         {
@@ -47,16 +61,6 @@ namespace BetterSaves
             int progressWidth = barWidth * progress / maxProgress;
             ModUtilities.Graphics.DrawRect(new Rect(barX, barY, barWidth, barHeight), bgColor);
             ModUtilities.Graphics.DrawRect(new Rect(barX, barY, progressWidth, barHeight), barColor);
-        }
-
-        public override void LodingWorld(string worldName)
-        {
-            if(!init)
-            {
-                IGConsole.RegisterCommand<Command_normalsave>();
-                IGConsole.RegisterCommand<Command_lscol>();
-                init = true;
-            }
         }
 
         public static string GetSavePath()
@@ -213,6 +217,7 @@ namespace BetterSaves
         {
             public override string Name => "normalsave";
             public override string Usage => $"{Name}";
+            public override string Description => "Unmodified save compatible with vanilla TUNG";
 
             public override bool Execute(IEnumerable<string> arguments)
             {
