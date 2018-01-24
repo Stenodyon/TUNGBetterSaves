@@ -11,6 +11,7 @@ using UnityEngine.SceneManagement;
 using UnityStandardAssets.Characters.FirstPerson;
 using System.Runtime.Serialization.Formatters.Binary;
 using System.Diagnostics;
+using System.Collections;
 
 namespace BetterSaves
 {
@@ -22,19 +23,8 @@ namespace BetterSaves
         public override Version FrameworkVersion => PiTung.FrameworkVersion;
 
         private static bool legacySave = false;
-
-        /*
-        [HarmonyPatch(typeof(IGConsole), "Init")]
-        class ConsoleInitPatch
-        {
-            static void Postfix()
-            {
-                // Register new commands here
-            }
-        }
-        */
-
         private static bool init = false;
+        private static int instancesPerFrame = 50;
 
         public override void LodingWorld(string worldName)
         {
@@ -80,6 +70,52 @@ namespace BetterSaves
             return objs.ToArray();
         }
 
+        private static IEnumerator LoadCoroutine()
+        {
+            Stopwatch watch = new Stopwatch();
+            watch.Start();
+            IGConsole.Log("Loading better save");
+
+            FileStream fs = new FileStream(GetSavePath(), FileMode.Open);
+            BinaryFormatter formatter = new BinaryFormatter();
+
+            PlayerPosition player;
+            Datum[] data;
+            try
+            {
+                player = formatter.Deserialize(fs) as PlayerPosition;
+                data = formatter.Deserialize(fs) as Datum[];
+            }
+            catch (Exception e)
+            {
+                IGConsole.Error($"Loading failed with {e.ToString()}");
+                yield break;
+            }
+            finally
+            {
+                fs.Close();
+            }
+            foreach (SaveThisObject obj in UnityEngine.Object.FindObjectsOfType<SaveThisObject>())
+                UnityEngine.Object.Destroy(obj.gameObject);
+            BehaviorManager.AllowedToUpdate = false;
+            MegaBoardMeshManager.MegaBoardMeshesOfColor.Clear();
+            SetPlayerPosition(player);
+            int size = data.Length;
+            for (int index = 0; index < size; index++)
+            {
+                Loader.Instantiate(data[index]);
+                if ((index + 1) % instancesPerFrame == 0)
+                {
+                    yield return new WaitForEndOfFrame();
+                }
+            }
+            SaveManager.RecalculateAllClustersEverywhereWithDelay();
+            MegaMesh.GenerateNewMegaMesh();
+            MegaBoardMeshManager.GenerateAllMegaBoardMeshes();
+            watch.Stop();
+            IGConsole.Log($"Loaded save in {watch.Elapsed.ToString()}");
+        }
+
         [HarmonyPatch(typeof(SaveManager), "LoadAll")]
         class LoadAllPatch
         {
@@ -91,42 +127,17 @@ namespace BetterSaves
                 watch.Start();
                 if(File.Exists(GetSavePath())) // It's a better save
                 {
-                    IGConsole.Log("Loading better save");
-                    bool result = false;
-                    FileStream fs = new FileStream(GetSavePath(), FileMode.Open);
-                    BinaryFormatter formatter = new BinaryFormatter();
-                    try
-                    {
-                        PlayerPosition player = formatter.Deserialize(fs) as PlayerPosition;
-                        Datum[] data = formatter.Deserialize(fs) as Datum[];
-                        foreach (SaveThisObject obj in UnityEngine.Object.FindObjectsOfType<SaveThisObject>())
-                            UnityEngine.Object.Destroy(obj.gameObject);
-                        BehaviorManager.AllowedToUpdate = false;
-                        MegaBoardMeshManager.MegaBoardMeshesOfColor.Clear();
-                        SetPlayerPosition(player);
-                        foreach (Datum datum in data)
-                            Loader.Instantiate(datum);
-                        SaveManager.RecalculateAllClustersEverywhereWithDelay();
-                        MegaMesh.GenerateNewMegaMesh();
-                        MegaBoardMeshManager.GenerateAllMegaBoardMeshes();
-                    }
-                    catch (Exception e)
-                    {
-                        IGConsole.Error($"Loading failed with {e.ToString()}");
-                        result = true;
-                    }
-                    finally
-                    {
-                        fs.Close();
-                    }
-                    return result;
+                    DummyComponent comp = UnityEngine.Object.FindObjectOfType<DummyComponent>();
+                    comp.StartCoroutine(LoadCoroutine());
+                    return false;
                 }
                 return true;
             }
 
             static void Postfix()
             {
-                watch.Stop();
+                if(watch.IsRunning)
+                    watch.Stop();
                 IGConsole.Log($"Loaded save in {watch.Elapsed.ToString()}");
             }
         }
