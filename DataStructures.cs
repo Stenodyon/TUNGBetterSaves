@@ -7,20 +7,37 @@ using UnityEngine;
 namespace BetterSaves
 {
     [Serializable]
+    public class v2
+    {
+        public float x, y;
+        public v2(float x, float y) { this.x = x; this.y = y; }
+        public static implicit operator Vector2(v2 o) { return new Vector2(o.x, o.y); }
+        public static implicit operator v2(Vector2 o) { return new v2(o.x, o.y); }
+    }
+
+    [Serializable]
     public class v3
     {
-        public float x, y,z;
+        public float x, y, z;
         public v3(float x, float y, float z) { this.x = x; this.y = y; this.z = z; }
         public static implicit operator Vector3(v3 o) { return new Vector3(o.x, o.y, o.z); }
         public static implicit operator v3(Vector3 o) { return new v3(o.x, o.y, o.z); }
     }
 
+    [Serializable]
     public class color
     {
         float r, g, b, a;
         public color(float r, float g, float b, float a) { this.r = r; this.g = g; this.b = b; this.a = a; }
         public static implicit operator Color(color o) { return new Color(o.r, o.g, o.b, o.a); }
         public static implicit operator color(Color o) { return new color(o.r, o.g, o.b, o.a); }
+    }
+
+    [Serializable]
+    public class PlayerPosition
+    {
+        public v3 pos;
+        public v2 angles;
     }
 
     [Serializable]
