@@ -90,25 +90,26 @@ namespace BetterSaves
     [Serializable]
     public class SwitchDatum : Datum
     {
-        public bool isOn;
+        public bool panel, isOn;
     }
 
     [Serializable]
     public class ButtonDatum : Datum
     {
-        public bool isOn;
+        public bool panel, isOn;
         public int downTime;
     }
 
     [Serializable]
     public class DisplayDatum : Datum
     {
-        public bool isOn;
+        public bool panel, isOn;
     }
 
     [Serializable]
     public class LabelDatum : Datum
     {
+        public bool panel;
         public string text;
         public float fontSize;
     }
@@ -116,7 +117,7 @@ namespace BetterSaves
     [Serializable]
     public class BlotterDatum : Datum
     {
-        public bool inputOn, outputON;
+        public bool through, inputOn, outputON;
     }
 
 }

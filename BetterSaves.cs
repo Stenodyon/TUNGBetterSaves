@@ -7,6 +7,7 @@ using PiTung_Bootstrap;
 using PiTung_Bootstrap.Console;
 using Harmony;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 using UnityStandardAssets.Characters.FirstPerson;
 using System.Runtime.Serialization.Formatters.Binary;
 using System.Diagnostics;
@@ -20,6 +21,8 @@ namespace BetterSaves
         public override Version ModVersion => new Version(0, 1, 0);
         public override Version FrameworkVersion => PiTung.FrameworkVersion;
 
+        private static bool legacySave = false;
+
         /*
         [HarmonyPatch(typeof(IGConsole), "Init")]
         class ConsoleInitPatch
@@ -30,6 +33,17 @@ namespace BetterSaves
             }
         }
         */
+
+        private static bool init = false;
+
+        public override void LodingWorld(string worldName)
+        {
+            if(!init)
+            {
+                IGConsole.RegisterCommand<Command_normalsave>();
+                init = true;
+            }
+        }
 
         public static string GetSavePath()
         {
@@ -55,14 +69,6 @@ namespace BetterSaves
             FirstPersonController.Instance.m_MouseLook.m_CameraTargetRot = Quaternion.Euler(pos.angles.x, 0f, 0f);
         }
 
-        public static void SavePlayerPosition()
-        {
-        }
-
-        public static void LoadPlayerPosition()
-        {
-        }
-
         public static Datum[] GetDatumsToSave()
         {
             List<Datum> objs = new List<Datum>();
@@ -82,6 +88,7 @@ namespace BetterSaves
             static bool Prefix()
             {
                 watch = new Stopwatch();
+                watch.Start();
                 if(File.Exists(GetSavePath())) // It's a better save
                 {
                     IGConsole.Log("Loading better save");
@@ -92,7 +99,16 @@ namespace BetterSaves
                     {
                         PlayerPosition player = formatter.Deserialize(fs) as PlayerPosition;
                         Datum[] data = formatter.Deserialize(fs) as Datum[];
+                        foreach (SaveThisObject obj in UnityEngine.Object.FindObjectsOfType<SaveThisObject>())
+                            UnityEngine.Object.Destroy(obj.gameObject);
+                        BehaviorManager.AllowedToUpdate = false;
+                        MegaBoardMeshManager.MegaBoardMeshesOfColor.Clear();
                         SetPlayerPosition(player);
+                        foreach (Datum datum in data)
+                            Loader.Instantiate(datum);
+                        SaveManager.RecalculateAllClustersEverywhereWithDelay();
+                        MegaMesh.GenerateNewMegaMesh();
+                        MegaBoardMeshManager.GenerateAllMegaBoardMeshes();
                     }
                     catch (Exception e)
                     {
@@ -110,6 +126,7 @@ namespace BetterSaves
 
             static void Postfix()
             {
+                watch.Stop();
                 IGConsole.Log($"Loaded save in {watch.Elapsed.ToString()}");
             }
         }
@@ -122,6 +139,9 @@ namespace BetterSaves
             static bool Prefix()
             {
                 watch = new Stopwatch();
+                watch.Start();
+                if (legacySave)
+                    return true;
                 PlayerPosition player = GetPlayerPosition();
                 Datum[] data = GetDatumsToSave();
                 FileStream fs = new FileStream(GetSavePath(), FileMode.Create);
@@ -144,7 +164,27 @@ namespace BetterSaves
 
             static void Postfix()
             {
+                watch.Stop();
                 IGConsole.Log($"Saved game in {watch.Elapsed.ToString()}");
+                legacySave = false;
+            }
+        }
+
+        private class Command_normalsave : Command
+        {
+            public override string Name => "normalsave";
+            public override string Usage => $"{Name}";
+
+            public override bool Execute(IEnumerable<string> arguments)
+            {
+                if (SceneManager.GetActiveScene().name != "gameplay")
+                {
+                    IGConsole.Error("Not currently in a world");
+                    return false;
+                }
+                legacySave = true;
+                SaveManager.SaveAll();
+                return true;
             }
         }
     }

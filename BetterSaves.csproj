@@ -60,6 +60,7 @@
     <Compile Include="BetterSaves.cs" />
     <Compile Include="Converter.cs" />
     <Compile Include="DataStructures.cs" />
+    <Compile Include="Loader.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

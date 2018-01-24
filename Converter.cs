@@ -10,6 +10,8 @@ namespace BetterSaves
     {
         public static Datum Convert(SaveThisObject obj)
         {
+            bool panel = obj.ObjectType.StartsWith("Panel")
+                || obj.ObjectType == "Through Blotter";
             Datum result = null;
             switch(obj.ObjectType)
             {
@@ -71,6 +73,7 @@ namespace BetterSaves
                 case "Panel Switch":
                     result = new SwitchDatum
                     {
+                        panel = panel,
                         isOn = obj.GetComponent<Switch>().On
                     };
                     break;
@@ -79,6 +82,7 @@ namespace BetterSaves
                     Button button = obj.GetComponent<Button>();
                     result = new ButtonDatum
                     {
+                        panel = panel,
                         isOn = button.output.On,
                         downTime = button.ButtonDownTime
                     };
@@ -87,6 +91,7 @@ namespace BetterSaves
                 case "Panel Display":
                     result = new DisplayDatum
                     {
+                        panel = panel,
                         isOn = obj.GetComponent<global::Display>().Input.On
                     };
                     break;
@@ -95,6 +100,7 @@ namespace BetterSaves
                     Label label = obj.GetComponent<Label>();
                     result = new LabelDatum
                     {
+                        panel = panel,
                         text = label.text.text,
                         fontSize = label.text.fontSize
                     };
@@ -104,6 +110,7 @@ namespace BetterSaves
                     Blotter blotter = obj.GetComponent<Blotter>();
                     result = new BlotterDatum
                     {
+                        through = panel,
                         inputOn = blotter.Input.On,
                         outputON = blotter.Output.On
                     };
