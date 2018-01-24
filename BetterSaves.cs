@@ -31,6 +31,7 @@ namespace BetterSaves
             if(!init)
             {
                 IGConsole.RegisterCommand<Command_normalsave>();
+                IGConsole.RegisterCommand<Command_lscol>();
                 init = true;
             }
         }
@@ -195,6 +196,39 @@ namespace BetterSaves
                 }
                 legacySave = true;
                 SaveManager.SaveAll();
+                return true;
+            }
+        }
+
+        private class Command_lscol : Command
+        {
+            public override string Name => "lscol";
+            public override string Usage => $"{Name}";
+
+            public override bool Execute(IEnumerable<string> arguments)
+            {
+                GameObject[] prefabs = new GameObject[]
+                {
+                    SaveObjectsList.Wire,
+                    SaveObjectsList.Inverter,
+                    SaveObjectsList.Peg,
+                    SaveObjectsList.Delayer,
+                    SaveObjectsList.ThroughPeg,
+                    SaveObjectsList.Switch,
+                    SaveObjectsList.Button,
+                    SaveObjectsList.Display,
+                    SaveObjectsList.Label,
+                    SaveObjectsList.PanelSwitch,
+                    SaveObjectsList.PanelButton,
+                    SaveObjectsList.PanelDisplay,
+                    SaveObjectsList.PanelLabel,
+                    SaveObjectsList.Blotter,
+                    SaveObjectsList.ThroughBlotter
+                };
+                foreach(var obj in prefabs)
+                {
+                    //do stuff
+                }
                 return true;
             }
         }
