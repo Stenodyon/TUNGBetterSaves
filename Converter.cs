@@ -8,6 +8,11 @@ namespace BetterSaves
 {
     public class Converter
     {
+        /// <summary>
+        /// Converts SaveThisObject into serializable data structures
+        /// </summary>
+        /// <param name="obj">The SaveThisObject to convert</param>
+        /// <returns>A serializable Datum containing the data in the SaveThisObject</returns>
         public static Datum Convert(SaveThisObject obj)
         {
             bool panel = obj.ObjectType.StartsWith("Panel")

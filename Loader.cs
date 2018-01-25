@@ -9,6 +9,11 @@ namespace BetterSaves
 {
     public class Loader
     {
+        /// <summary>
+        /// Gets the TUNG ObjectType from the serializable data structure
+        /// </summary>
+        /// <param name="datum">The component data structure</param>
+        /// <returns>Its corresponding ObjectType</returns>
         private static string ObjectType(Datum datum)
         {
             string result = "";
@@ -35,6 +40,12 @@ namespace BetterSaves
             return UnityEngine.Object.Instantiate(SaveObjectsList.ObjectTypeToPrefab(type), parent);
         }
 
+        /// <summary>
+        /// Creates an object from its serializable data
+        /// </summary>
+        /// <param name="data">The data (e.g. read from a file)</param>
+        /// <param name="parent">The parent of component (for components on
+        /// boards)</param>
         public static void Instantiate(Datum data, Transform parent = null)
         {
             string objType = ObjectType(data);
@@ -61,6 +72,8 @@ namespace BetterSaves
             };
             dict[data.GetType()]();
         }
+
+        // Loading functions for each type of component
 
         private static void OnBoard(BoardDatum datum, SaveThisObject save, Transform parent)
         {
