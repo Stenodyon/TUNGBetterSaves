@@ -157,7 +157,9 @@ namespace BetterSaves
             loading = true;
             Stopwatch watch = new Stopwatch();
             watch.Start();
+#if DEBUG
             IGConsole.Log($"Loading better save {GetSavePath()}");
+#endif
 
             FileStream fs = new FileStream(GetSavePath(), FileMode.Open);
             BinaryFormatter formatter = new BinaryFormatter();
@@ -178,7 +180,9 @@ namespace BetterSaves
             {
                 fs.Close();
             }
+#if DEBUG
             IGConsole.Log($"Length of data {data.Length}");
+#endif
             foreach (SaveThisObject obj in UnityEngine.Object.FindObjectsOfType<SaveThisObject>())
                 UnityEngine.Object.Destroy(obj.gameObject);
             BehaviorManager.AllowedToUpdate = false;
