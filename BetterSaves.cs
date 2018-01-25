@@ -72,7 +72,7 @@ namespace BetterSaves
                 if (!init)
                 {
                     IGConsole.RegisterCommand<Command_normalsave>();
-                    IGConsole.Log($"BetterSaves v{Version.ToString()}");
+                    IGConsole.Log($"BetterSaves v{Version.ToString()} initialized");
                     init = true;
                 }
             }
@@ -95,6 +95,11 @@ namespace BetterSaves
             ModUtilities.Graphics.DrawRect(new Rect(barX, barY, progressWidth, barHeight), barColor);
         }
 
+        public static string GetSaveDirectory()
+        {
+            return Application.persistentDataPath + "/saves";
+        }
+
         /// <summary>
         /// Get the save path of the improved save file
         /// </summary>
@@ -102,6 +107,11 @@ namespace BetterSaves
         public static string GetSavePath()
         {
             return Application.persistentDataPath + "/saves/" + SaveManager.SaveName + ".btung";
+        }
+
+        public static string GetVanillaSave()
+        {
+            return Application.persistentDataPath + "/saves/" + SaveManager.SaveName + ".tung";
         }
 
         public static PlayerPosition GetPlayerPosition()
@@ -147,7 +157,7 @@ namespace BetterSaves
             loading = true;
             Stopwatch watch = new Stopwatch();
             watch.Start();
-            IGConsole.Log("Loading better save");
+            IGConsole.Log($"Loading better save {GetSavePath()}");
 
             FileStream fs = new FileStream(GetSavePath(), FileMode.Open);
             BinaryFormatter formatter = new BinaryFormatter();
@@ -168,6 +178,7 @@ namespace BetterSaves
             {
                 fs.Close();
             }
+            IGConsole.Log($"Length of data {data.Length}");
             foreach (SaveThisObject obj in UnityEngine.Object.FindObjectsOfType<SaveThisObject>())
                 UnityEngine.Object.Destroy(obj.gameObject);
             BehaviorManager.AllowedToUpdate = false;
@@ -201,6 +212,7 @@ namespace BetterSaves
         class LoadAllPatch
         {
             private static Stopwatch watch;
+            private static bool betterSave = false;
 
             static bool Prefix()
             {
@@ -208,10 +220,12 @@ namespace BetterSaves
                 watch.Start();
                 if (File.Exists(GetSavePath())) // It's a better save
                 {
+                    betterSave = true;
                     DummyComponent comp = UnityEngine.Object.FindObjectOfType<DummyComponent>();
                     comp.StartCoroutine(LoadCoroutine());
                     return false;
                 }
+                betterSave = false;
                 return true;
             }
 
@@ -219,7 +233,8 @@ namespace BetterSaves
             {
                 if (watch.IsRunning)
                     watch.Stop();
-                IGConsole.Log($"Loaded save in {watch.Elapsed.ToString()}");
+                if (!betterSave)
+                    IGConsole.Log($"Loaded save in {watch.Elapsed.ToString()}");
             }
         }
 
@@ -236,6 +251,8 @@ namespace BetterSaves
                 watch = new Stopwatch();
                 watch.Start();
                 if (legacySave)
+                    return true;
+                if (!File.Exists(GetVanillaSave()))
                     return true;
                 PlayerPosition player = GetPlayerPosition();
                 Datum[] data = GetDatumsToSave();
@@ -286,6 +303,55 @@ namespace BetterSaves
             static bool Prefix()
             {
                 return !loading; // Really do not exit
+            }
+        }
+
+        /// <summary>
+        /// Extensions to the load menu
+        /// </summary>
+        [HarmonyPatch(typeof(LoadGame), "GenerateLoadGamesMenu")]
+        class LoadMenuPatch
+        {
+            static void Postfix(LoadGame __instance)
+            {
+                foreach(var saveFile in __instance.UISaveFiles) // Color BetterSaved games
+                {
+                    string fileName = GetSaveDirectory() + "/" + saveFile.FileName + ".btung";
+                    if (File.Exists(fileName))
+                    {
+                        saveFile.Title.text = $"<color=#15A51A>{saveFile.Title.text}</color>";
+                        FileInfo info = new FileInfo(fileName);
+                        long kBsize = info.Length / 1000;
+                        DateTime time = info.LastWriteTime;
+                        saveFile.Info.text = $"{kBsize} kB | {time}";
+                    }
+                }
+                string[] files = Directory.GetFiles(GetSaveDirectory());
+                List<string> toAdd = new List<string>();
+                foreach(string file in files) // Find bettersaves without regular save
+                {
+                    string basename = Path.GetFileNameWithoutExtension(file);
+                    string tungName = GetSaveDirectory() + "/" + basename + ".tung";
+                    if (file.EndsWith(".btung") && !File.Exists(tungName))
+                        toAdd.Add(basename);
+                }
+                int index = __instance.UISaveFiles.Count;
+                foreach(string name in toAdd)
+                {
+                    GameObject obj = UnityEngine.Object.Instantiate(__instance.LoadGamePrefab, __instance.Parent);
+                    obj.name = name;
+                    UISaveFile entry = obj.GetComponent<UISaveFile>();
+                    entry.FileName = name;
+                    entry.Title.text = $"<color=\"blue\">{name}</color>";
+                    entry.SetPosition(index);
+                    FileInfo info = new FileInfo(GetSaveDirectory() + "/" + name + ".btung");
+                    long kBSize = info.Length / 1000;
+                    DateTime time = info.LastWriteTime;
+                    entry.Info.text = $"{kBSize} kB | {time}";
+                    __instance.UISaveFiles.Add(entry);
+                    index++;
+                }
+                __instance.Parent.sizeDelta = new Vector2(784f, (float)(10 + index * 110));
             }
         }
 
