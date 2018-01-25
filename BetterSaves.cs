@@ -16,20 +16,52 @@ namespace BetterSaves
 {
     public class BetterSaves : Mod
     {
+        private static readonly Version Version = Assembly.GetExecutingAssembly().GetName().Version;
+
         public override string Name => "BetterSaves";
         public override string Author => "Stenodyon";
-        public override Version ModVersion => Assembly.GetExecutingAssembly().GetName().Version;
+        public override Version ModVersion => Version;
         public override Version FrameworkVersion => new Version(1, 0, 0, 0);
 
+        /// <summary>
+        /// If set to true, next save will not use the improved format.
+        /// Useful for saving to the regular file for sharing with vanilla TUNG
+        /// </summary>
         private static bool legacySave = false;
+
+        /// <summary>
+        /// Number of instanciations per frame
+        /// </summary>
         private static int instancesPerFrame = 50;
 
+        /// <summary>
+        /// True if currently loading
+        /// </summary>
         private static bool loading = false;
+
+        /// <summary>
+        /// Loading progress in object instances
+        /// </summary>
         private static int progress = 0;
+
+        /// <summary>
+        /// Amount of objects to instanciate
+        /// </summary>
         private static int maxProgress = 1;
+
+        /// <summary>
+        /// Color of the progress bar background
+        /// </summary>
         private static readonly Color bgColor = new Color(0f, 0f, 0f, 0.5f);
+
+        /// <summary>
+        /// Color of the progress bar
+        /// </summary>
         private static readonly Color barColor = new Color(0f, 1f, 1f);
 
+        /// <summary>
+        /// Mod initialization patch
+        /// </summary>
         [HarmonyPatch(typeof(DummyComponent), "Awake")]
         static class InitPatch
         {
@@ -37,10 +69,10 @@ namespace BetterSaves
 
             static void Postfix()
             {
-                if(!init)
+                if (!init)
                 {
                     IGConsole.RegisterCommand<Command_normalsave>();
-                    IGConsole.Log($"PiTUNG version {PiTung.FrameworkVersion.ToString()}");
+                    IGConsole.Log($"BetterSaves v{Version.ToString()}");
                     init = true;
                 }
             }
@@ -63,6 +95,10 @@ namespace BetterSaves
             ModUtilities.Graphics.DrawRect(new Rect(barX, barY, progressWidth, barHeight), barColor);
         }
 
+        /// <summary>
+        /// Get the save path of the improved save file
+        /// </summary>
+        /// <returns>Path of the improved save file</returns>
         public static string GetSavePath()
         {
             return Application.persistentDataPath + "/saves/" + SaveManager.SaveName + ".btung";
@@ -87,6 +123,10 @@ namespace BetterSaves
             FirstPersonController.Instance.m_MouseLook.m_CameraTargetRot = Quaternion.Euler(pos.angles.x, 0f, 0f);
         }
 
+        /// <summary>
+        /// Gathers all objects to save into serializable datums
+        /// </summary>
+        /// <returns>The serializable structures</returns>
         public static Datum[] GetDatumsToSave()
         {
             List<Datum> objs = new List<Datum>();
@@ -98,6 +138,10 @@ namespace BetterSaves
             return objs.ToArray();
         }
 
+        /// <summary>
+        /// Load coroutine, yields every now and then to delay
+        /// loading
+        /// </summary>
         private static IEnumerator LoadCoroutine()
         {
             loading = true;
@@ -150,6 +194,9 @@ namespace BetterSaves
             IGConsole.Log($"Loaded save in {watch.Elapsed.ToString()}");
         }
 
+        /// <summary>
+        /// Load function replacement
+        /// </summary>
         [HarmonyPatch(typeof(SaveManager), "LoadAll")]
         class LoadAllPatch
         {
@@ -159,7 +206,7 @@ namespace BetterSaves
             {
                 watch = new Stopwatch();
                 watch.Start();
-                if(File.Exists(GetSavePath())) // It's a better save
+                if (File.Exists(GetSavePath())) // It's a better save
                 {
                     DummyComponent comp = UnityEngine.Object.FindObjectOfType<DummyComponent>();
                     comp.StartCoroutine(LoadCoroutine());
@@ -170,12 +217,15 @@ namespace BetterSaves
 
             static void Postfix()
             {
-                if(watch.IsRunning)
+                if (watch.IsRunning)
                     watch.Stop();
                 IGConsole.Log($"Loaded save in {watch.Elapsed.ToString()}");
             }
         }
 
+        /// <summary>
+        /// Save function replacement
+        /// </summary>
         [HarmonyPatch(typeof(SaveManager), "SaveAll")]
         class SaveAllPatch
         {
@@ -215,6 +265,37 @@ namespace BetterSaves
             }
         }
 
+        /// <summary>
+        /// Prevents exiting before loading finished
+        /// </summary>
+        [HarmonyPatch(typeof(RunPauseMenu), "QuitToDesktop")]
+        class NoExitPatch
+        {
+            static bool Prefix()
+            {
+                return !loading; // If loading, do not exit
+            }
+        }
+
+        /// <summary>
+        /// Prevents exiting before loading finished
+        /// </summary>
+        [HarmonyPatch(typeof(RunPauseMenu), "QuitToMainMenu")]
+        class NoExitPatch2
+        {
+            static bool Prefix()
+            {
+                return !loading; // Really do not exit
+            }
+        }
+
+        // ####################
+        //  Commands
+        // ####################
+
+        /// <summary>
+        /// Vanilla save command
+        /// </summary>
         private class Command_normalsave : Command
         {
             public override string Name => "normalsave";
@@ -233,16 +314,12 @@ namespace BetterSaves
                 return true;
             }
         }
+    }
 
-        private class Command_lscol : Command
+    internal class Utils
+    {
+        public static readonly GameObject[] prefabs = new GameObject[]
         {
-            public override string Name => "lscol";
-            public override string Usage => $"{Name}";
-
-            public override bool Execute(IEnumerable<string> arguments)
-            {
-                GameObject[] prefabs = new GameObject[]
-                {
                     SaveObjectsList.Wire,
                     SaveObjectsList.Inverter,
                     SaveObjectsList.Peg,
@@ -258,31 +335,6 @@ namespace BetterSaves
                     SaveObjectsList.PanelLabel,
                     SaveObjectsList.Blotter,
                     SaveObjectsList.ThroughBlotter
-                };
-                foreach(var obj in prefabs)
-                {
-                    //do stuff
-                }
-                return true;
-            }
-        }
-
-        [HarmonyPatch(typeof(RunPauseMenu), "QuitToDesktop")]
-        class NoExitPatch
-        {
-            static bool Prefix()
-            {
-                return !loading; // If loading, do not exit
-            }
-        }
-
-        [HarmonyPatch(typeof(RunPauseMenu), "QuitToMainMenu")]
-        class NoExitPatch2
-        {
-            static bool Prefix()
-            {
-                return !loading; // Really do not exit
-            }
-        }
+        };
     }
 }
