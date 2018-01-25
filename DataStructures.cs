@@ -6,6 +6,8 @@ using UnityEngine;
 
 namespace BetterSaves
 {
+    // Serializable versions of some UnityEngine data structures
+
     [Serializable]
     public class v2
     {
@@ -33,6 +35,9 @@ namespace BetterSaves
         public static implicit operator color(Color o) { return new color(o.r, o.g, o.b, o.a); }
     }
 
+    /// <summary>
+    /// Player position container
+    /// </summary>
     [Serializable]
     public class PlayerPosition
     {
@@ -40,6 +45,9 @@ namespace BetterSaves
         public v2 angles;
     }
 
+    /// <summary>
+    /// Base container for all components
+    /// </summary>
     [Serializable]
     public class Datum
     {
