@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+using System.Runtime.Serialization.Formatters.Binary;
+using System.Diagnostics;
+using System.Collections;
+using System.Reflection;
 using System.IO;
 using PiTung_Bootstrap;
 using PiTung_Bootstrap.Console;
@@ -9,9 +11,6 @@ using Harmony;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityStandardAssets.Characters.FirstPerson;
-using System.Runtime.Serialization.Formatters.Binary;
-using System.Diagnostics;
-using System.Collections;
 
 namespace BetterSaves
 {
@@ -19,8 +18,8 @@ namespace BetterSaves
     {
         public override string Name => "BetterSaves";
         public override string Author => "Stenodyon";
-        public override Version ModVersion => new Version(0, 1, 0);
-        public override Version FrameworkVersion => PiTung.FrameworkVersion;
+        public override Version ModVersion => Assembly.GetExecutingAssembly().GetName().Version;
+        public override Version FrameworkVersion => new Version(1, 0, 0, 0);
 
         private static bool legacySave = false;
         private static int instancesPerFrame = 50;
@@ -41,6 +40,7 @@ namespace BetterSaves
                 if(!init)
                 {
                     IGConsole.RegisterCommand<Command_normalsave>();
+                    IGConsole.Log($"PiTUNG version {PiTung.FrameworkVersion.ToString()}");
                     init = true;
                 }
             }
