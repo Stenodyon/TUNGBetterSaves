@@ -320,21 +320,22 @@ namespace BetterSaves
     {
         public static readonly GameObject[] prefabs = new GameObject[]
         {
-                    SaveObjectsList.Wire,
-                    SaveObjectsList.Inverter,
-                    SaveObjectsList.Peg,
-                    SaveObjectsList.Delayer,
-                    SaveObjectsList.ThroughPeg,
-                    SaveObjectsList.Switch,
-                    SaveObjectsList.Button,
-                    SaveObjectsList.Display,
-                    SaveObjectsList.Label,
-                    SaveObjectsList.PanelSwitch,
-                    SaveObjectsList.PanelButton,
-                    SaveObjectsList.PanelDisplay,
-                    SaveObjectsList.PanelLabel,
-                    SaveObjectsList.Blotter,
-                    SaveObjectsList.ThroughBlotter
+            SaveObjectsList.CircuitBoard,
+            SaveObjectsList.Wire,
+            SaveObjectsList.Inverter,
+            SaveObjectsList.Peg,
+            SaveObjectsList.Delayer,
+            SaveObjectsList.ThroughPeg,
+            SaveObjectsList.Switch,
+            SaveObjectsList.Button,
+            SaveObjectsList.Display,
+            SaveObjectsList.Label,
+            SaveObjectsList.PanelSwitch,
+            SaveObjectsList.PanelButton,
+            SaveObjectsList.PanelDisplay,
+            SaveObjectsList.PanelLabel,
+            SaveObjectsList.Blotter,
+            SaveObjectsList.ThroughBlotter
         };
     }
 }
