@@ -355,6 +355,34 @@ namespace BetterSaves
             }
         }
 
+        /// <summary>
+        /// Renaming support
+        /// </summary>
+        [HarmonyPatch(typeof(LoadGame), "SetNewName")]
+        class RenamePatch
+        {
+            static bool Prefix(LoadGame __instance)
+            {
+                string path = $"{GetSaveDirectory()}/{__instance.SelectedSaveFile.FileName}.tung";
+                if (!File.Exists(path))
+                    return false;
+                return true;
+            }
+
+            static void Postfix(LoadGame __instance)
+            {
+                string oldName = __instance.SelectedSaveFile.FileName;
+                string newName = NewGame.ValidatedUniqueSaveName(__instance.RenameInput.text);
+                string oldPath = $"{GetSaveDirectory()}/{oldName}.btung";
+                string newPath = $"{GetSaveDirectory()}/{newName}.btung";
+                if (File.Exists(oldPath))
+                {
+                    File.Move(oldPath, newPath);
+                }
+                __instance.GenerateLoadGamesMenu();
+            }
+        }
+
         // ####################
         //  Commands
         // ####################
