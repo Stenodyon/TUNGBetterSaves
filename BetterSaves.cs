@@ -376,9 +376,45 @@ namespace BetterSaves
                 string oldPath = $"{GetSaveDirectory()}/{oldName}.btung";
                 string newPath = $"{GetSaveDirectory()}/{newName}.btung";
                 if (File.Exists(oldPath))
-                {
                     File.Move(oldPath, newPath);
+                __instance.GenerateLoadGamesMenu();
+            }
+        }
+
+        private static string GetUniqueSaveName(string originalName)
+        {
+            string newName = originalName;
+            while (File.Exists($"{GetSaveDirectory()}/{newName}.btung"))
+                newName += "-";
+            return newName;
+        }
+
+        /// <summary>
+        /// Save duplication support
+        /// </summary>
+        [HarmonyPatch(typeof(LoadGame), "DuplicateGame")]
+        class DuplicatePatch
+        {
+            private static string newName;
+
+            static bool Prefix(LoadGame __instance)
+            {
+                string path = $"{GetSaveDirectory()}/{__instance.SelectedSaveFile.FileName}.tung";
+                if (!File.Exists(path))
+                {
+                    newName = GetUniqueSaveName(__instance.SelectedSaveFile.FileName);
+                    return false;
                 }
+                newName = NewGame.ValidatedUniqueSaveName(__instance.SelectedSaveFile.FileName);
+                return true;
+            }
+
+            static void Postfix(LoadGame __instance)
+            {
+                string oldPath = $"{GetSaveDirectory()}/{__instance.SelectedSaveFile.FileName}.btung";
+                string newPath = $"{GetSaveDirectory()}/{newName}.btung";
+                if (File.Exists(oldPath))
+                    File.Copy(oldPath, newPath);
                 __instance.GenerateLoadGamesMenu();
             }
         }
