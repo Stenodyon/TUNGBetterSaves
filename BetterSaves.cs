@@ -419,6 +419,23 @@ namespace BetterSaves
             }
         }
 
+        /// <summary>
+        /// Deletion support
+        /// </summary>
+        [HarmonyPatch(typeof(LoadGame), "DeleteGame")]
+        class DeletePatch
+        {
+            static void Postfix(LoadGame __instance)
+            {
+                if (__instance.SelectedSaveFile.FileName == null)
+                    return;
+                string fileName = $"{GetSaveDirectory()}/{__instance.SelectedSaveFile.FileName}.btung";
+                if (File.Exists(fileName))
+                    File.Delete(fileName);
+                __instance.GenerateLoadGamesMenu();
+            }
+        }
+
         // ####################
         //  Commands
         // ####################
