@@ -21,7 +21,7 @@ namespace BetterSaves
         public override string Name => "BetterSaves";
         public override string Author => "Stenodyon";
         public override Version ModVersion => Version;
-        public override Version FrameworkVersion => new Version(1, 0, 0, 0);
+        public override Version FrameworkVersion => new Version(1, 1, 2, PiTung.FrameworkVersion.Revision);
 
         /// <summary>
         /// If set to true, next save will not use the improved format.
