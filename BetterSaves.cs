@@ -5,8 +5,8 @@ using System.Diagnostics;
 using System.Collections;
 using System.Reflection;
 using System.IO;
-using PiTung_Bootstrap;
-using PiTung_Bootstrap.Console;
+using PiTung;
+using PiTung.Console;
 using Harmony;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -21,7 +21,8 @@ namespace BetterSaves
         public override string Name => "BetterSaves";
         public override string Author => "Stenodyon";
         public override Version ModVersion => Version;
-        public override Version FrameworkVersion => new Version(1, 1, 2, PiTung.FrameworkVersion.Revision);
+        public override Version FrameworkVersion => new Version(1, 6, 0, PiTUNG.FrameworkVersion.Revision);
+        public override string PackageName => "me.stenodyon.BetterSaves";
 
         /// <summary>
         /// If set to true, next save will not use the improved format.
@@ -59,23 +60,10 @@ namespace BetterSaves
         /// </summary>
         private static readonly Color barColor = new Color(0f, 1f, 1f);
 
-        /// <summary>
-        /// Mod initialization patch
-        /// </summary>
-        [HarmonyPatch(typeof(DummyComponent), "Awake")]
-        static class InitPatch
+        public override void AfterPatch()
         {
-            private static bool init = false;
-
-            static void Postfix()
-            {
-                if (!init)
-                {
-                    IGConsole.RegisterCommand<Command_normalsave>();
-                    IGConsole.Log($"BetterSaves v{Version.ToString()} initialized");
-                    init = true;
-                }
-            }
+            IGConsole.RegisterCommand<Command_normalsave>(this);
+            IGConsole.Log($"BetterSaves v{Version.ToString()} initialized");
         }
 
         public override void OnGUI()
