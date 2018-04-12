@@ -1,3 +1,5 @@
+*This mod is obsolete since TUNG v0.2 as the feature is now officially supported*
+
 # TUNGBetterSaves
 A mod improving saves in TUNG, making load time shorter and save time
 significantly shorter (no more waiting 2 minutes after pressing escape).
